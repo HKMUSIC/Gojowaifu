@@ -8,48 +8,50 @@ async def send_log_message(chat_id: int, message: str):
     """Send a log message to the specified chat."""
     await app.send_message(chat_id=chat_id, text=message)
 
+import asyncio
+
 @app.on_message(filters.new_chat_members)
 async def on_new_chat_members(client: Client, message: Message):
-    """Handle new chat members joining the chat."""
     bot_user = await client.get_me()
-    
-    # Check if the bot is one of the new members
+
     if bot_user.id in [user.id for user in message.new_chat_members]:
         added_by = message.from_user.mention if message.from_user else "ᴜɴᴋɴᴏᴡɴ ᴜsᴇʀ"
         chat_title = message.chat.title
         chat_id = message.chat.id
-        chat_username = f"@{message.chat.username}" if message.chat.username else "ᴩʀɪᴠᴀᴛᴇ"
+        chat_username = f"@{message.chat.username}" if message.chat.username else "ᴩʀɪᴠᴀᴛ"
 
-        # Construct the log message
+        # Log to admin channel
         log_message = (
-            f"#newgoroup\n\n"
-            f"chat name : {chat_title}\n"
-            f"username : {chat_username}\n"
-            f"added by : {added_by}"
+            f"#newgroup\n\n"
+            f"👥 Chat Name: {chat_title}\n"
+            f"🔗 Username: {chat_username}\n"
+            f"➕ Added By: {added_by}"
         )
-        
-        # Send the log message
-        await send_log_message(GLOG, log_message)
+        await send_log_message(LOGGER_ID, log_message)
 
-        # Check if the group has less than 30 members
+        # Check member count
         chat_members_count = await client.get_chat_members_count(chat_id)
         if chat_members_count < 15:
-            leave_message = (
-                f"#leftgroup\n\n"
-                f"chat name : {chat_title}\n"
-                f"chat username : {chat_username}\n"
-                f"reason : Group has less than 15 members"
+            group_notice = (
+                "**🚫 Sorry!**\n"
+                "**This group has less than 15 members.**\n"
+                
             )
-            await send_log_message(chat_id, leave_message)
-            # Leave the group if it has less than 15 members
+            await message.reply(group_notice)  # 🟢 Message for group
+
+            await asyncio.sleep(2)  # Wait before leaving
+
+            # Leave the group
             await client.leave_chat(chat_id)
-            leave_message = (
+
+            # Log to admin
+            leave_log = (
                 f"#leftgroup\n\n"
-                f"chat name : {chat_title}\n"
-                f"chat username : {chat_username}\n"
-                f"reason : Group has less than 15 members"
+                f"👥 Chat Name: {chat_title}\n"
+                f"🔗 Username: {chat_username}\n"
+                f"❌ Reason: Group has less than 15 members"
             )
-            await send_log_message(GLOG, leave_message)
+            await send_log_message(LOGGER_ID, leave_log)
 
 @app.on_message(filters.left_chat_member)
 async def on_left_chat_member(_, message: Message):
